@@ -1,4 +1,4 @@
-# 🪄⚔️🛡️ Herói RPG
+# ✨⚔️🛡️ Herói RPG
 
 > Sistema de combate estilo **Pedra, Papel e Tesoura** com acumulação de XP e classificação de níveis.  
 > Projeto baseado no desafio DIO — *Classificador de Nível de Herói*.
@@ -35,9 +35,11 @@ Conforme o XP acumula, o herói sobe de nível:
 
 ---
 
-## 🌐 Versão Web
+## 🌐 Jogue Agora!
 
-Jogue diretamente no navegador! Acesse a pasta [`heroi-rpg-web/`](./heroi-rpg-web) e abra o `index.html`.
+👉 **[Clique aqui para jogar!](https://gustavodeoliveiradev.github.io/heroi-rpg/)**
+
+Ou acesse: `https://gustavodeoliveiradev.github.io/heroi-rpg/`
 
 ### ✨ Features da versão web:
 - 🎨 **Tema RPG Medieval** — Dark theme com dourado e fonte Cinzel
@@ -53,6 +55,8 @@ Jogue diretamente no navegador! Acesse a pasta [`heroi-rpg-web/`](./heroi-rpg-we
 ---
 
 ## 🖥️ Versão Terminal (Node.js)
+
+Prefere jogar no terminal? Sem problemas!
 
 ```bash
 # Clone o repositório
@@ -74,21 +78,22 @@ node index.js
 
 ```
 heroi-rpg/
-├── index.js              # Versão terminal — ponto de entrada
-├── heroi.js              # Sistema de XP e classificação de nível
+├── docs/                 # 🌐 Versão Web (GitHub Pages)
+│   ├── index.html        # Página principal
+│   ├── css/
+│   │   ├── main.css      # Estilos globais e tema
+│   │   ├── animacoes.css # Animações de combate
+│   │   └── painel.css    # Painel de status e menus
+│   └── js/
+│       ├── heroi.js      # Classe Heroi
+│       ├── jogo.js       # Lógica do combate
+│       ├── ui.js         # Manipulação do DOM
+│       └── app.js        # Inicialização
+│
+├── index.js              # 🖥️ Versão Terminal
+├── heroi.js              # Sistema de XP e níveis
 ├── jogo.js               # Lógica do combate (terminal)
-├── README.md             # Este arquivo
-└── heroi-rpg-web/        # Versão web
-    ├── index.html        # Página principal
-    ├── css/
-    │   ├── main.css      # Estilos globais e tema
-    │   ├── animacoes.css # Animações de combate
-    │   └── painel.css    # Painel de status e menus
-    └── js/
-        ├── heroi.js      # Classe Heroi (reutilizada!)
-        ├── jogo.js       # Lógica do combate
-        ├── ui.js         # Manipulação do DOM
-        └── app.js        # Inicialização
+└── README.md             # Documentação
 ```
 
 ---
@@ -100,18 +105,18 @@ heroi-rpg/
 - [x] **Versão Web com interface visual**
 - [x] Sistema de streak com bônus de XP
 - [x] Inimigos com nomes aleatórios
+- [x] **Hospedagem no GitHub Pages**
 - [ ] 💾 Salvamento de progresso (localStorage)
 - [ ] 🏆 Sistema de conquistas/badges
 - [ ] 🎯 Chefões especiais
 - [ ] 📈 Ranking de heróis
 - [ ] 🎵 Efeitos sonoros
-- [ ] 🌐 Hospedagem online (GitHub Pages)
 
 ---
 
 ## 📝 Licença
 
-Projeto educacional desenvolvido pela [DIO](https://www.dio.me/).
+Projeto educacional desenvolvido em aulas da [DIO](https://www.dio.me/).
 
 ---
 
