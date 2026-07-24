@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herói RPG — O Duelo dos Elementos</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/animacoes.css">
+  <link rel="stylesheet" href="css/painel.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bg-particles" id="particles"></div>
+
+  <!-- TELA DE LOGIN -->
+  <section class="tela tela-login ativa" id="tela-login">
+    <div class="login-container">
+      <div class="emblema">✨ ⚔️ 🛡️</div>
+      <h1 class="titulo-principal">HERÓI RPG</h1>
+      <p class="subtitulo">O Duelo dos Elementos</p>
+      <div class="login-form">
+        <input type="text" id="input-nome" placeholder="Digite o nome do seu herói..." maxlength="20">
+        <button class="btn-epico" id="btn-iniciar">
+          <span class="btn-texto">Iniciar Jornada</span>
+          <span class="btn-brilho"></span>
+        </button>
+      </div>
+      <p class="versao">v1.0 Web</p>
+    </div>
+  </section>
+
+  <!-- TELA PRINCIPAL DO JOGO -->
+  <section class="tela tela-jogo" id="tela-jogo">
+    <!-- Painel Superior: Status do Herói -->
+    <header class="painel-status">
+      <div class="status-esquerda">
+        <div class="avatar-heroi" id="avatar-heroi">🧙‍♂️</div>
+        <div class="info-heroi">
+          <h2 class="nome-heroi" id="nome-heroi">Herói</h2>
+          <div class="nivel-badge" id="nivel-badge">🟤 Ferro</div>
+        </div>
+      </div>
+      <div class="status-centro">
+        <div class="barra-xp-container">
+          <div class="barra-xp-label">
+            <span>XP</span>
+            <span id="xp-texto">0 / 1000</span>
+          </div>
+          <div class="barra-xp-fundo">
+            <div class="barra-xp-preenchimento" id="barra-xp" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="status-direita">
+        <div class="stat-item">
+          <span class="stat-icone">🏆</span>
+          <span class="stat-valor" id="stat-vitorias">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icone">💀</span>
+          <span class="stat-valor" id="stat-derrotas">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icone">🤝</span>
+          <span class="stat-valor" id="stat-empates">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Área de Combate -->
+    <main class="arena-combate">
+      <!-- Lado do Herói -->
+      <div class="lado-combate lado-heroi">
+        <div class="cartao-combatente" id="cartao-heroi">
+          <div class="combatente-nome" id="combatente-nome-heroi">Seu Herói</div>
+          <div class="combatente-icone" id="icone-heroi">🧙‍♂️</div>
+          <div class="combatente-item" id="item-heroi">?</div>
+        </div>
+      </div>
+
+      <!-- VS -->
+      <div class="vs-divisor">
+        <span class="vs-texto">VS</span>
+        <div class="vs-raio"></div>
+      </div>
+
+      <!-- Lado do Inimigo -->
+      <div class="lado-combate lado-inimigo">
+        <div class="cartao-combatente" id="cartao-inimigo">
+          <div class="combatente-nome" id="combatente-nome-inimigo">Computador</div>
+          <div class="combatente-icone" id="icone-inimigo">👹</div>
+          <div class="combatente-item" id="item-inimigo">?</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Resultado do Combate -->
+    <div class="area-resultado" id="area-resultado">
+      <div class="resultado-texto" id="resultado-texto">Escolha seu item para duelar!</div>
+      <div class="resultado-xp" id="resultado-xp"></div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <nav class="botoes-acao">
+      <button class="btn-item" data-item="1" id="btn-varinha">
+        <span class="item-emoji">✨</span>
+        <span class="item-nome">Varinha Mágica</span>
+        <span class="item-dica">Vence Escudo</span>
+      </button>
+      <button class="btn-item" data-item="2" id="btn-espada">
+        <span class="item-emoji">⚔️</span>
+        <span class="item-nome">Espada</span>
+        <span class="item-dica">Vence Varinha</span>
+      </button>
+      <button class="btn-item" data-item="3" id="btn-escudo">
+        <span class="item-emoji">🛡️</span>
+        <span class="item-nome">Escudo</span>
+        <span class="item-dica">Vence Espada</span>
+      </button>
+    </nav>
+
+    <!-- Rodapé -->
+    <footer class="rodape-jogo">
+      <button class="btn-secundario" id="btn-status">📊 Ver Status Completo</button>
+      <button class="btn-secundario" id="btn-sair">🚪 Sair</button>
+    </footer>
+  </section>
+
+  <!-- MODAL DE STATUS -->
+  <div class="modal-overlay" id="modal-status">
+    <div class="modal-conteudo">
+      <button class="modal-fechar" id="modal-fechar">✕</button>
+      <h2 class="modal-titulo">📊 Status do Herói</h2>
+      <div class="modal-corpo" id="modal-corpo"></div>
+    </div>
+  </div>
+
+  <!-- NOTIFICAÇÃO LEVEL UP -->
+  <div class="notificacao-levelup" id="notificacao-levelup">
+    <div class="levelup-brilho">⭐</div>
+    <div class="levelup-texto">
+      <div class="levelup-titulo">LEVEL UP!</div>
+      <div class="levelup-nivel" id="levelup-nivel">Ferro → Bronze</div>
+    </div>
+  </div>
+
+  <script src="js/heroi.js"></script>
+  <script src="js/jogo.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
