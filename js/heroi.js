@@ -1,7 +1,7 @@
 /**
  * Sistema de classificação de nível do herói
  * Baseado no desafio DIO — Classificador de Nível de Herói
- * Versão Web (Vanilla JS)
+ * Versão Web com localStorage
  */
 
 function classificarNivel(xp) {
@@ -55,23 +55,33 @@ function getXpNivelAtual(xpAtual) {
 }
 
 class Heroi {
-  constructor(nome) {
-    this.nome = nome;
-    this.xp = 0;
-    this.vitorias = 0;
-    this.derrotas = 0;
-    this.empates = 0;
-    this.nivel = classificarNivel(this.xp);
-    this.streak = 0;
-    this.maiorStreak = 0;
+  constructor(nome, dadosSalvos = null) {
+    if (dadosSalvos) {
+      this.nome = dadosSalvos.nome;
+      this.xp = dadosSalvos.xp;
+      this.vitorias = dadosSalvos.vitorias;
+      this.derrotas = dadosSalvos.derrotas;
+      this.empates = dadosSalvos.empates;
+      this.streak = dadosSalvos.streak;
+      this.maiorStreak = dadosSalvos.maiorStreak;
+      this.nivel = classificarNivel(this.xp);
+    } else {
+      this.nome = nome;
+      this.xp = 0;
+      this.vitorias = 0;
+      this.derrotas = 0;
+      this.empates = 0;
+      this.nivel = classificarNivel(this.xp);
+      this.streak = 0;
+      this.maiorStreak = 0;
+    }
   }
 
   ganharXp(quantidade) {
-    // Bônus de streak
     let bonus = 0;
     if (this.streak >= 3) bonus = Math.floor(quantidade * 0.25);
     if (this.streak >= 5) bonus = Math.floor(quantidade * 0.5);
-    if (this.streak >= 10) bonus = quantidade; // Dobro!
+    if (this.streak >= 10) bonus = quantidade;
 
     const total = quantidade + bonus;
     this.xp += total;
@@ -80,22 +90,63 @@ class Heroi {
     if (this.streak > this.maiorStreak) this.maiorStreak = this.streak;
 
     const nivelSubiu = this.atualizarNivel();
+    this.salvar();
     return { xpGanho: total, bonus, nivelSubiu };
   }
 
   perder() {
     this.derrotas++;
     this.streak = 0;
+    this.salvar();
   }
 
   empatar() {
     this.empates++;
+    this.salvar();
   }
 
   atualizarNivel() {
     const nivelAnterior = this.nivel;
     this.nivel = classificarNivel(this.xp);
     return this.nivel !== nivelAnterior;
+  }
+
+  salvar() {
+    try {
+      localStorage.setItem('heroiRpg_dados', JSON.stringify({
+        nome: this.nome,
+        xp: this.xp,
+        vitorias: this.vitorias,
+        derrotas: this.derrotas,
+        empates: this.empates,
+        streak: this.streak,
+        maiorStreak: this.maiorStreak
+      }));
+    } catch (e) {
+      console.warn('Não foi possível salvar no localStorage:', e);
+    }
+  }
+
+  static carregar() {
+    try {
+      const dados = localStorage.getItem('heroiRpg_dados');
+      if (dados) {
+        return JSON.parse(dados);
+      }
+    } catch (e) {
+      console.warn('Não foi possível carregar do localStorage:', e);
+    }
+    return null;
+  }
+
+  static reiniciar() {
+    try {
+      localStorage.removeItem('heroiRpg_dados');
+      return true;
+    } catch (e) {
+      console.warn('Não foi possível reiniciar:', e);
+      return false;
+    }
   }
 
   getProgressoXp() {
@@ -130,7 +181,7 @@ class Heroi {
   }
 }
 
-// Exporta para uso nos outros módulos
+// Exporta
 window.Heroi = Heroi;
 window.classificarNivel = classificarNivel;
 window.getEmojiNivel = getEmojiNivel;
