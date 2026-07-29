@@ -1,6 +1,6 @@
 /**
  * HERÓI RPG — Interface do Usuário (UI)
- * Manipulação do DOM, animações, localStorage e feedback visual
+ * Manipulação do DOM, animações, localStorage, Conquistas e feedback visual
  */
 
 class UI {
@@ -21,12 +21,12 @@ class UI {
   verificarProgressoSalvo() {
     const dadosSalvos = Heroi.carregar();
     if (dadosSalvos) {
-      // Pergunta se quer continuar
       const querContinuar = confirm(
         `🎮 Progresso encontrado!\n\n` +
         `Herói: ${dadosSalvos.nome}\n` +
         `Nível: ${getEmojiNivel(classificarNivel(dadosSalvos.xp))} ${classificarNivel(dadosSalvos.xp)}\n` +
-        `XP: ${dadosSalvos.xp}\n\n` +
+        `XP: ${dadosSalvos.xp}\n` +
+        `Conquistas: ${(dadosSalvos.conquistas || []).length}/${Object.keys(CONQUISTAS_DEFINICAO).length}\n\n` +
         `Deseja continuar de onde parou?`
       );
 
@@ -54,21 +54,16 @@ class UI {
 
   // ========== EVENTOS ==========
   bindEventos() {
-    // Login
     const btnIniciar = document.getElementById('btn-iniciar');
     const inputNome = document.getElementById('input-nome');
 
-    if (btnIniciar) {
-      btnIniciar.addEventListener('click', () => this.iniciarJogo());
-    }
-
+    if (btnIniciar) btnIniciar.addEventListener('click', () => this.iniciarJogo());
     if (inputNome) {
       inputNome.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') this.iniciarJogo();
       });
     }
 
-    // Botões de item
     document.querySelectorAll('.btn-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const item = e.currentTarget.dataset.item;
@@ -76,7 +71,6 @@ class UI {
       });
     });
 
-    // Status, Sair e Reiniciar
     const btnStatus = document.getElementById('btn-status');
     const btnSair = document.getElementById('btn-sair');
     const btnFecharModal = document.getElementById('modal-fechar');
@@ -87,7 +81,6 @@ class UI {
     if (btnFecharModal) btnFecharModal.addEventListener('click', () => this.fecharModalStatus());
     if (btnReiniciar) btnReiniciar.addEventListener('click', () => this.reiniciarProgresso());
 
-    // Fechar modal ao clicar fora
     const modalOverlay = document.getElementById('modal-status');
     if (modalOverlay) {
       modalOverlay.addEventListener('click', (e) => {
@@ -101,7 +94,6 @@ class UI {
     const input = document.getElementById('input-nome');
     const nome = input.value.trim() || "Herói Sem Nome";
 
-    // Verifica se já existe progresso com outro nome
     const dadosSalvos = Heroi.carregar();
     if (dadosSalvos && dadosSalvos.nome !== nome) {
       const querSobrescrever = confirm(
@@ -120,10 +112,8 @@ class UI {
 
   entrarNoJogo() {
     this.atualizarPainelStatus();
-
     document.getElementById('tela-login').classList.remove('ativa');
     document.getElementById('tela-jogo').classList.add('ativa');
-
     this.mostrarResultado(`✨ Bem-vindo de volta, ${this.heroi.nome}! Escolha seu item para duelar!`);
   }
 
@@ -161,35 +151,38 @@ class UI {
     let xpGanho = 0;
     let bonusXp = 0;
     let nivelSubiu = false;
+    let novasConquistas = [];
 
     if (resultado.resultado === "vitoria") {
       const res = this.heroi.ganharXp(XP_POR_VITORIA);
       xpGanho = res.xpGanho;
       bonusXp = res.bonus;
       nivelSubiu = res.nivelSubiu;
+      novasConquistas = res.novasConquistas;
 
       document.getElementById('cartao-heroi').classList.add('glow-vitoria');
       document.getElementById('cartao-inimigo').classList.add('dano-recebido');
     } else if (resultado.resultado === "empate") {
-      this.heroi.empatar();
-      const res = this.heroi.ganharXp(XP_POR_EMPATE);
-      xpGanho = res.xpGanho;
+      const res = this.heroi.empatar();
+      xpGanho = XP_POR_EMPATE;
+      // CORREÇÃO: Agora empate NÃO conta como vitória!
+      novasConquistas = res.novasConquistas;
 
       document.getElementById('cartao-heroi').classList.add('glow-empate');
       document.getElementById('cartao-inimigo').classList.add('glow-empate');
     } else {
-      this.heroi.perder();
+      const res = this.heroi.perder();
+      novasConquistas = res.novasConquistas;
 
       document.getElementById('cartao-heroi').classList.add('glow-derrota', 'dano-recebido');
       document.getElementById('cartao-inimigo').classList.add('glow-vitoria');
     }
 
+    // Monta mensagem de resultado
     let mensagemFinal = resultado.mensagem;
     if (resultado.resultado === "vitoria") {
       mensagemFinal += ` (+${xpGanho} XP)`;
-      if (bonusXp > 0) {
-        mensagemFinal += ` [Bônus streak: +${bonusXp}]`;
-      }
+      if (bonusXp > 0) mensagemFinal += ` [Bônus: +${bonusXp}]`;
       const msgStreak = getMensagemStreak(this.heroi.streak);
       if (msgStreak) mensagemFinal = msgStreak + "\n" + mensagemFinal;
     } else if (resultado.resultado === "empate") {
@@ -198,6 +191,15 @@ class UI {
 
     this.mostrarResultado(mensagemFinal, resultado.resultado);
     this.atualizarPainelStatus();
+
+    // Mostra conquistas desbloqueadas
+    if (novasConquistas.length > 0) {
+      await this.delay(300);
+      for (const conquista of novasConquistas) {
+        this.mostrarConquista(conquista);
+        await this.delay(2500);
+      }
+    }
 
     if (nivelSubiu) {
       await this.delay(500);
@@ -209,6 +211,27 @@ class UI {
 
     document.querySelectorAll('.btn-item').forEach(btn => btn.disabled = false);
     this.processando = false;
+  }
+
+  // ========== MOSTRAR CONQUISTA ==========
+  mostrarConquista(conquista) {
+    const notif = document.getElementById('notificacao-levelup');
+    const nivelEl = document.getElementById('levelup-nivel');
+    const tituloEl = notif.querySelector('.levelup-titulo');
+    const brilhoEl = notif.querySelector('.levelup-brilho');
+
+    tituloEl.textContent = "🏆 NOVA CONQUISTA!";
+    nivelEl.innerHTML = `${conquista.emoji} ${conquista.nome}<br><small style="font-size:0.8rem;color:#a0a0b0">${conquista.descricao}</small>`;
+    brilhoEl.textContent = conquista.emoji;
+
+    notif.classList.add('ativo');
+
+    setTimeout(() => {
+      notif.classList.remove('ativo');
+      // Restaura textos originais
+      tituloEl.textContent = "LEVEL UP!";
+      brilhoEl.textContent = "⭐";
+    }, 3000);
   }
 
   // ========== ATUALIZAR PAINEL ==========
@@ -228,8 +251,6 @@ class UI {
   // ========== MOSTRAR RESULTADO ==========
   mostrarResultado(texto, tipo = "") {
     const el = document.getElementById('resultado-texto');
-    const elXp = document.getElementById('resultado-xp');
-
     el.textContent = texto;
     el.className = 'resultado-texto';
 
@@ -238,19 +259,21 @@ class UI {
     else if (tipo === "empate") el.style.color = "#6495ed";
     else el.style.color = "var(--cor-texto)";
 
-    if (tipo === "processando") {
-      el.classList.add('processando');
-    }
+    if (tipo === "processando") el.classList.add('processando');
   }
 
   // ========== MOSTRAR LEVEL UP ==========
   mostrarLevelUp(nivel) {
     const notif = document.getElementById('notificacao-levelup');
     const nivelEl = document.getElementById('levelup-nivel');
+    const tituloEl = notif.querySelector('.levelup-titulo');
+    const brilhoEl = notif.querySelector('.levelup-brilho');
 
+    tituloEl.textContent = "LEVEL UP!";
     nivelEl.textContent = `Você alcançou o nível ${nivel}!`;
-    notif.classList.add('ativo');
+    brilhoEl.textContent = "⭐";
 
+    notif.classList.add('ativo');
     document.getElementById('avatar-heroi').classList.add('pulso-escala');
 
     setTimeout(() => {
@@ -294,6 +317,60 @@ class UI {
     const taxaVitoria = totalPartidas > 0
       ? Math.round((status.vitorias / totalPartidas) * 100)
       : 0;
+
+    // Pega conquistas
+    const { desbloqueadas, bloqueadas } = this.heroi.getConquistas();
+
+    let conquistasHTML = '';
+    if (desbloqueadas.length > 0) {
+      conquistasHTML += `
+        <div style="margin: 1rem 0 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--cor-borda);">
+          <div style="font-family: var(--fonte-titulo); color: var(--cor-primaria); font-size: 1rem; margin-bottom: 0.8rem; text-align: center;">
+            🏆 Conquistas Desbloqueadas (${desbloqueadas.length}/${status.totalConquistasDisponiveis})
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+      `;
+
+      desbloqueadas.forEach(c => {
+        const cor = getRaridadeCor(c.raridade);
+        conquistasHTML += `
+          <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid ${cor}40;">
+            <span style="font-size: 1.5rem;">${c.emoji}</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; color: var(--cor-texto); font-size: 0.9rem;">${c.nome}</div>
+              <div style="font-size: 0.75rem; color: var(--cor-texto-secundario);">${c.descricao}</div>
+            </div>
+            <span style="font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; background: ${cor}20; color: ${cor}; border: 1px solid ${cor}40;">${getRaridadeLabel(c.raridade)}</span>
+          </div>
+        `;
+      });
+
+      conquistasHTML += `</div></div>`;
+    }
+
+    if (bloqueadas.length > 0) {
+      conquistasHTML += `
+        <div style="margin: 1rem 0 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--cor-borda);">
+          <div style="font-family: var(--fonte-titulo); color: var(--cor-texto-secundario); font-size: 0.9rem; margin-bottom: 0.8rem; text-align: center;">
+            🔒 Conquistas Bloqueadas (${bloqueadas.length})
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+      `;
+
+      bloqueadas.forEach(c => {
+        conquistasHTML += `
+          <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.8rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid var(--cor-borda); opacity: 0.5;">
+            <span style="font-size: 1.3rem;">❓</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: var(--cor-texto-secundario); font-size: 0.85rem;">${c.nome}</div>
+              <div style="font-size: 0.7rem; color: var(--cor-texto-secundario);">${c.descricao}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      conquistasHTML += `</div></div>`;
+    }
 
     corpo.innerHTML = `
       <div class="status-linha">
@@ -345,6 +422,7 @@ class UI {
         <span class="status-label">🎮 Partidas Totais</span>
         <span class="status-valor">${totalPartidas}</span>
       </div>
+      ${conquistasHTML}
     `;
 
     modal.classList.add('ativo');
@@ -362,7 +440,8 @@ class UI {
       `⚠️ ATENÇÃO!\n\n` +
       `Você está prestes a APAGAR TODO O PROGRESSO de ${this.heroi.nome}.\n` +
       `Nível: ${getEmojiNivel(this.heroi.nivel)} ${this.heroi.nivel}\n` +
-      `XP: ${this.heroi.xp}\n\n` +
+      `XP: ${this.heroi.xp}\n` +
+      `Conquistas: ${this.heroi.conquistas.length}\n\n` +
       `Esta ação NÃO pode ser desfeita!\n\n` +
       `Deseja realmente reiniciar?`
     );
@@ -372,7 +451,6 @@ class UI {
       this.heroi = null;
       this.fecharModalStatus();
 
-      // Volta pra tela de login
       document.getElementById('tela-jogo').classList.remove('ativa');
       document.getElementById('tela-login').classList.add('ativa');
       document.getElementById('input-nome').value = '';

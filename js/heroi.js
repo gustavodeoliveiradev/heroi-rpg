@@ -1,39 +1,25 @@
 /**
- * Sistema de classificação de nível do herói
+ * Sistema de classificação de nível do herói + Conquistas
  * Baseado no desafio DIO — Classificador de Nível de Herói
- * Versão Web com localStorage
+ * Versão Web com localStorage e Sistema de Conquistas
  */
 
 function classificarNivel(xp) {
-  if (xp <= 1000) {
-    return "Ferro";
-  } else if (xp <= 2000) {
-    return "Bronze";
-  } else if (xp <= 5000) {
-    return "Prata";
-  } else if (xp <= 7000) {
-    return "Ouro";
-  } else if (xp <= 8000) {
-    return "Platina";
-  } else if (xp <= 9000) {
-    return "Ascendente";
-  } else if (xp <= 10000) {
-    return "Imortal";
-  } else {
-    return "Radiante";
-  }
+  if (xp <= 1000) return "Ferro";
+  else if (xp <= 2000) return "Bronze";
+  else if (xp <= 5000) return "Prata";
+  else if (xp <= 7000) return "Ouro";
+  else if (xp <= 8000) return "Platina";
+  else if (xp <= 9000) return "Ascendente";
+  else if (xp <= 10000) return "Imortal";
+  else return "Radiante";
 }
 
 function getEmojiNivel(nivel) {
   const emojis = {
-    "Ferro": "🟤",
-    "Bronze": "🟡",
-    "Prata": "⚪",
-    "Ouro": "🟡",
-    "Platina": "💎",
-    "Ascendente": "⭐",
-    "Imortal": "👑",
-    "Radiante": "🔥"
+    "Ferro": "🟤", "Bronze": "🟡", "Prata": "⚪",
+    "Ouro": "🟡", "Platina": "💎", "Ascendente": "⭐",
+    "Imortal": "👑", "Radiante": "🔥"
   };
   return emojis[nivel] || "❓";
 }
@@ -54,6 +40,150 @@ function getXpNivelAtual(xpAtual) {
   return 0;
 }
 
+// ========== SISTEMA DE CONQUISTAS ==========
+const CONQUISTAS_DEFINICAO = {
+  primeira_vitoria: {
+    id: "primeira_vitoria",
+    nome: "Primeira Vitória",
+    descricao: "Vença seu primeiro duelo",
+    emoji: "🥇",
+    raridade: "comum",
+    condicao: (h) => h.vitorias >= 1
+  },
+  vitorioso: {
+    id: "vitorioso",
+    nome: "Vitorioso",
+    descricao: "Vença 10 duelos",
+    emoji: "🏆",
+    raridade: "comum",
+    condicao: (h) => h.vitorias >= 10
+  },
+  lendario: {
+    id: "lendario",
+    nome: "Lendário",
+    descricao: "Vença 50 duelos",
+    emoji: "👑",
+    raridade: "rara",
+    condicao: (h) => h.vitorias >= 50
+  },
+  nivel_bronze: {
+    id: "nivel_bronze",
+    nome: "Forja Iniciada",
+    descricao: "Alcance o nível Bronze",
+    emoji: "🟡",
+    raridade: "comum",
+    condicao: (h) => ["Bronze", "Prata", "Ouro", "Platina", "Ascendente", "Imortal", "Radiante"].includes(h.nivel)
+  },
+  nivel_prata: {
+    id: "nivel_prata",
+    nome: "Brilho da Prata",
+    descricao: "Alcance o nível Prata",
+    emoji: "⚪",
+    raridade: "comum",
+    condicao: (h) => ["Prata", "Ouro", "Platina", "Ascendente", "Imortal", "Radiante"].includes(h.nivel)
+  },
+  nivel_ouro: {
+    id: "nivel_ouro",
+    nome: "Coração de Ouro",
+    descricao: "Alcance o nível Ouro",
+    emoji: "🟡",
+    raridade: "rara",
+    condicao: (h) => ["Ouro", "Platina", "Ascendente", "Imortal", "Radiante"].includes(h.nivel)
+  },
+  nivel_platina: {
+    id: "nivel_platina",
+    nome: "Platina Brilhante",
+    descricao: "Alcance o nível Platina",
+    emoji: "💎",
+    raridade: "epica",
+    condicao: (h) => ["Platina", "Ascendente", "Imortal", "Radiante"].includes(h.nivel)
+  },
+  nivel_radiante: {
+    id: "nivel_radiante",
+    nome: "Radiante Supremo",
+    descricao: "Alcance o nível Radiante",
+    emoji: "🔥",
+    raridade: "lendario",
+    condicao: (h) => h.nivel === "Radiante"
+  },
+  streak_3: {
+    id: "streak_3",
+    nome: "Fogo no Coração",
+    descricao: "Conquiste 3 vitórias seguidas",
+    emoji: "🔥",
+    raridade: "comum",
+    condicao: (h) => h.maiorStreak >= 3
+  },
+  streak_5: {
+    id: "streak_5",
+    nome: "Imparável",
+    descricao: "Conquiste 5 vitórias seguidas",
+    emoji: "⚡",
+    raridade: "rara",
+    condicao: (h) => h.maiorStreak >= 5
+  },
+  streak_10: {
+    id: "streak_10",
+    nome: "Deus da Guerra",
+    descricao: "Conquiste 10 vitórias seguidas",
+    emoji: "👹",
+    raridade: "epica",
+    condicao: (h) => h.maiorStreak >= 10
+  },
+  primeiro_empate: {
+    id: "primeiro_empate",
+    nome: "Paz Temporária",
+    descricao: "Empate seu primeiro duelo",
+    emoji: "🤝",
+    raridade: "comum",
+    condicao: (h) => h.empates >= 1
+  },
+  primeiro_derrota: {
+    id: "primeiro_derrota",
+    nome: "Levanta a Cabeça",
+    descricao: "Sofra sua primeira derrota",
+    emoji: "💀",
+    raridade: "comum",
+    condicao: (h) => h.derrotas >= 1
+  },
+  guerreiro: {
+    id: "guerreiro",
+    nome: "Guerreiro Nato",
+    descricao: "Complete 25 partidas",
+    emoji: "⚔️",
+    raridade: "comum",
+    condicao: (h) => (h.vitorias + h.derrotas + h.empates) >= 25
+  },
+  veterano: {
+    id: "veterano",
+    nome: "Veterano de Batalha",
+    descricao: "Complete 100 partidas",
+    emoji: "🛡️",
+    raridade: "rara",
+    condicao: (h) => (h.vitorias + h.derrotas + h.empates) >= 100
+  }
+};
+
+function getRaridadeCor(raridade) {
+  const cores = {
+    comum: "#a0a0a0",
+    rara: "#3498db",
+    epica: "#9b59b6",
+    lendario: "#f39c12"
+  };
+  return cores[raridade] || "#a0a0a0";
+}
+
+function getRaridadeLabel(raridade) {
+  const labels = {
+    comum: "Comum",
+    rara: "Rara",
+    epica: "Épica",
+    lendario: "Lendária"
+  };
+  return labels[raridade] || "Comum";
+}
+
 class Heroi {
   constructor(nome, dadosSalvos = null) {
     if (dadosSalvos) {
@@ -64,6 +194,7 @@ class Heroi {
       this.empates = dadosSalvos.empates;
       this.streak = dadosSalvos.streak;
       this.maiorStreak = dadosSalvos.maiorStreak;
+      this.conquistas = dadosSalvos.conquistas || [];
       this.nivel = classificarNivel(this.xp);
     } else {
       this.nome = nome;
@@ -74,9 +205,11 @@ class Heroi {
       this.nivel = classificarNivel(this.xp);
       this.streak = 0;
       this.maiorStreak = 0;
+      this.conquistas = [];
     }
   }
 
+  // ========== CORREÇÃO DO BUG DO EMPATE ==========
   ganharXp(quantidade) {
     let bonus = 0;
     if (this.streak >= 3) bonus = Math.floor(quantidade * 0.25);
@@ -90,19 +223,43 @@ class Heroi {
     if (this.streak > this.maiorStreak) this.maiorStreak = this.streak;
 
     const nivelSubiu = this.atualizarNivel();
+    const novasConquistas = this.verificarConquistas();
     this.salvar();
-    return { xpGanho: total, bonus, nivelSubiu };
+    return { xpGanho: total, bonus, nivelSubiu, novasConquistas };
   }
 
   perder() {
     this.derrotas++;
     this.streak = 0;
+    const novasConquistas = this.verificarConquistas();
     this.salvar();
+    return { novasConquistas };
   }
 
   empatar() {
     this.empates++;
+    // NÃO incrementa vitorias e NÃO reseta streak no empate
+    const novasConquistas = this.verificarConquistas();
     this.salvar();
+    return { novasConquistas };
+  }
+
+  // ========== SISTEMA DE CONQUISTAS ==========
+  verificarConquistas() {
+    const novas = [];
+    for (const [key, conquista] of Object.entries(CONQUISTAS_DEFINICAO)) {
+      if (!this.conquistas.includes(conquista.id) && conquista.condicao(this)) {
+        this.conquistas.push(conquista.id);
+        novas.push(conquista);
+      }
+    }
+    return novas;
+  }
+
+  getConquistas() {
+    const desbloqueadas = this.conquistas.map(id => CONQUISTAS_DEFINICAO[id]).filter(Boolean);
+    const bloqueadas = Object.values(CONQUISTAS_DEFINICAO).filter(c => !this.conquistas.includes(c.id));
+    return { desbloqueadas, bloqueadas };
   }
 
   atualizarNivel() {
@@ -120,7 +277,8 @@ class Heroi {
         derrotas: this.derrotas,
         empates: this.empates,
         streak: this.streak,
-        maiorStreak: this.maiorStreak
+        maiorStreak: this.maiorStreak,
+        conquistas: this.conquistas
       }));
     } catch (e) {
       console.warn('Não foi possível salvar no localStorage:', e);
@@ -130,9 +288,7 @@ class Heroi {
   static carregar() {
     try {
       const dados = localStorage.getItem('heroiRpg_dados');
-      if (dados) {
-        return JSON.parse(dados);
-      }
+      if (dados) return JSON.parse(dados);
     } catch (e) {
       console.warn('Não foi possível carregar do localStorage:', e);
     }
@@ -176,7 +332,9 @@ class Heroi {
       streak: this.streak,
       maiorStreak: this.maiorStreak,
       progressoXp: this.getProgressoXp(),
-      xpDisplay: this.getXpDisplay()
+      xpDisplay: this.getXpDisplay(),
+      totalConquistas: this.conquistas.length,
+      totalConquistasDisponiveis: Object.keys(CONQUISTAS_DEFINICAO).length
     };
   }
 }
@@ -185,3 +343,6 @@ class Heroi {
 window.Heroi = Heroi;
 window.classificarNivel = classificarNivel;
 window.getEmojiNivel = getEmojiNivel;
+window.CONQUISTAS_DEFINICAO = CONQUISTAS_DEFINICAO;
+window.getRaridadeCor = getRaridadeCor;
+window.getRaridadeLabel = getRaridadeLabel;
