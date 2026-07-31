@@ -1,12 +1,12 @@
 /**
- * Sistema de combate: Varinha Mágica, Espada, Escudo
- * Regras: Varinha > Escudo | Espada > Varinha | Escudo > Espada
+ * Sistema de combate: Orbe Místico, Espada, Escudo
+ * Regras: Orbe > Escudo | Espada > Orbe | Escudo > Espada
  * Versão Web
  */
 
 const ITENS = {
-  1: { nome: "Varinha Mágica", emoji: "✨", vence: "Escudo", cor: "#9b59b6" },
-  2: { nome: "Espada", emoji: "⚔️", vence: "Varinha Mágica", cor: "#e74c3c" },
+  1: { nome: "Orbe Místico", emoji: "🔮", vence: "Escudo", cor: "#9b59b6" },
+  2: { nome: "Espada", emoji: "⚔️", vence: "Orbe Místico", cor: "#e74c3c" },
   3: { nome: "Escudo", emoji: "🛡️", vence: "Espada", cor: "#3498db" }
 };
 
@@ -47,9 +47,8 @@ function resolverCombate(escolhaJogador, escolhaComputador) {
   }
 
   if (itemJogador.vence === itemPC.nome) {
-    // Mensagens imersivas de vitória
     const mensagensVitoria = [
-      `Sua ${itemJogador.nome} dissolve o ${itemPC.nome} do inimigo!`,
+      `Seu ${itemJogador.nome} dissolve o ${itemPC.nome} do inimigo!`,
       `Seu ataque com ${itemJogador.nome} foi imparável!`,
       `Você defendeu e contra-atacou com ${itemJogador.nome}!`,
       `${itemJogador.nome} brilha e vence ${itemPC.nome}!`,
@@ -63,9 +62,8 @@ function resolverCombate(escolhaJogador, escolhaComputador) {
     };
   }
 
-  // Mensagens imersivas de derrota
   const mensagensDerrota = [
-    `O ${itemPC.nome} do inimigo superou sua ${itemJogador.nome}!`,
+    `O ${itemPC.nome} do inimigo superou seu ${itemJogador.nome}!`,
     `Seu ${itemJogador.nome} não resistiu ao ${itemPC.nome}!`,
     `O inimigo aniquilou seu ${itemJogador.nome} com ${itemPC.nome}!`,
     `${itemPC.nome} do inimigo foi implacável contra ${itemJogador.nome}!`
