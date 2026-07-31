@@ -25,7 +25,7 @@
           <span class="btn-brilho"></span>
         </button>
       </div>
-      <p class="versao">v1.2 Web</p>
+      <p class="versao">v1.3 Web</p>
     </div>
   </section>
 
@@ -67,6 +67,17 @@
       </div>
     </header>
 
+    <!-- Barra de Chefão -->
+    <div class="barra-chefao-container" id="barra-chefao-container">
+      <div class="barra-chefao-label">
+        <span>🐉 Próximo Chefão</span>
+        <span id="chefao-contador">0 / 5 vitórias</span>
+      </div>
+      <div class="barra-chefao-fundo">
+        <div class="barra-chefao-preenchimento" id="barra-chefao" style="width: 0%"></div>
+      </div>
+    </div>
+
     <!-- Área de Combate -->
     <main class="arena-combate">
       <!-- Lado do Herói -->
@@ -80,7 +91,7 @@
 
       <!-- VS -->
       <div class="vs-divisor">
-        <span class="vs-texto">VS</span>
+        <span class="vs-texto" id="vs-texto">VS</span>
         <div class="vs-raio"></div>
       </div>
 
@@ -138,12 +149,12 @@
     </div>
   </div>
 
-  <!-- NOTIFICAÇÃO LEVEL UP -->
+  <!-- NOTIFICAÇÃO LEVEL UP / CONQUISTA / CHEFÃO -->
   <div class="notificacao-levelup" id="notificacao-levelup">
-    <div class="levelup-brilho">⭐</div>
+    <div class="levelup-brilho" id="notif-icone">⭐</div>
     <div class="levelup-texto">
-      <div class="levelup-titulo">LEVEL UP!</div>
-      <div class="levelup-nivel" id="levelup-nivel">Ferro → Bronze</div>
+      <div class="levelup-titulo" id="notif-titulo">LEVEL UP!</div>
+      <div class="levelup-nivel" id="notif-mensagem">Você alcançou o nível Ferro!</div>
     </div>
   </div>
 

@@ -1,7 +1,7 @@
 /**
- * Sistema de classificação de nível do herói + Conquistas
+ * Sistema de classificação de nível do herói + Conquistas + Chefões
  * Baseado no desafio DIO — Classificador de Nível de Herói
- * Versão Web com localStorage e Sistema de Conquistas
+ * Versão Web v1.3
  */
 
 function classificarNivel(xp) {
@@ -161,6 +161,31 @@ const CONQUISTAS_DEFINICAO = {
     emoji: "🛡️",
     raridade: "rara",
     condicao: (h) => (h.vitorias + h.derrotas + h.empates) >= 100
+  },
+  // NOVAS CONQUISTAS v1.3 - CHEFOES
+  primeiro_chefao: {
+    id: "primeiro_chefao",
+    nome: "Caçador de Chefões",
+    descricao: "Derrote seu primeiro chefão",
+    emoji: "🐉",
+    raridade: "rara",
+    condicao: (h) => h.chefoesDerrotados >= 1
+  },
+  cacador_chefoes: {
+    id: "cacador_chefoes",
+    nome: "Exterminador",
+    descricao: "Derrote 5 chefões",
+    emoji: "🏹",
+    raridade: "epica",
+    condicao: (h) => h.chefoesDerrotados >= 5
+  },
+  lendario_cacador: {
+    id: "lendario_cacador",
+    nome: "Lendário Caçador",
+    descricao: "Derrote 10 chefões",
+    emoji: "⚔️",
+    raridade: "lendario",
+    condicao: (h) => h.chefoesDerrotados >= 10
   }
 };
 
@@ -195,6 +220,9 @@ class Heroi {
       this.streak = dadosSalvos.streak;
       this.maiorStreak = dadosSalvos.maiorStreak;
       this.conquistas = dadosSalvos.conquistas || [];
+      this.chefoesDerrotados = dadosSalvos.chefoesDerrotados || 0;
+      this.vitoriasDesdeUltimoChefe = dadosSalvos.vitoriasDesdeUltimoChefe || 0;
+      this.ultimaEscolha = dadosSalvos.ultimaEscolha || null;
       this.nivel = classificarNivel(this.xp);
     } else {
       this.nome = nome;
@@ -206,11 +234,13 @@ class Heroi {
       this.streak = 0;
       this.maiorStreak = 0;
       this.conquistas = [];
+      this.chefoesDerrotados = 0;
+      this.vitoriasDesdeUltimoChefe = 0;
+      this.ultimaEscolha = null;
     }
   }
 
-  // ========== CORREÇÃO DO BUG DO EMPATE ==========
-  ganharXp(quantidade) {
+  ganharXp(quantidade, isChefe = false) {
     let bonus = 0;
     if (this.streak >= 3) bonus = Math.floor(quantidade * 0.25);
     if (this.streak >= 5) bonus = Math.floor(quantidade * 0.5);
@@ -221,6 +251,11 @@ class Heroi {
     this.vitorias++;
     this.streak++;
     if (this.streak > this.maiorStreak) this.maiorStreak = this.streak;
+    this.vitoriasDesdeUltimoChefe++;
+
+    if (isChefe) {
+      this.chefoesDerrotados++;
+    }
 
     const nivelSubiu = this.atualizarNivel();
     const novasConquistas = this.verificarConquistas();
@@ -231,6 +266,7 @@ class Heroi {
   perder() {
     this.derrotas++;
     this.streak = 0;
+    this.vitoriasDesdeUltimoChefe = 0;
     const novasConquistas = this.verificarConquistas();
     this.salvar();
     return { novasConquistas };
@@ -238,13 +274,11 @@ class Heroi {
 
   empatar() {
     this.empates++;
-    // NÃO incrementa vitorias e NÃO reseta streak no empate
     const novasConquistas = this.verificarConquistas();
     this.salvar();
     return { novasConquistas };
   }
 
-  // ========== SISTEMA DE CONQUISTAS ==========
   verificarConquistas() {
     const novas = [];
     for (const [key, conquista] of Object.entries(CONQUISTAS_DEFINICAO)) {
@@ -278,7 +312,10 @@ class Heroi {
         empates: this.empates,
         streak: this.streak,
         maiorStreak: this.maiorStreak,
-        conquistas: this.conquistas
+        conquistas: this.conquistas,
+        chefoesDerrotados: this.chefoesDerrotados,
+        vitoriasDesdeUltimoChefe: this.vitoriasDesdeUltimoChefe,
+        ultimaEscolha: this.ultimaEscolha
       }));
     } catch (e) {
       console.warn('Não foi possível salvar no localStorage:', e);
@@ -334,7 +371,9 @@ class Heroi {
       progressoXp: this.getProgressoXp(),
       xpDisplay: this.getXpDisplay(),
       totalConquistas: this.conquistas.length,
-      totalConquistasDisponiveis: Object.keys(CONQUISTAS_DEFINICAO).length
+      totalConquistasDisponiveis: Object.keys(CONQUISTAS_DEFINICAO).length,
+      chefoesDerrotados: this.chefoesDerrotados,
+      vitoriasDesdeUltimoChefe: this.vitoriasDesdeUltimoChefe
     };
   }
 }

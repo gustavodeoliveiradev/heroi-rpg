@@ -1,6 +1,6 @@
 /**
- * HERÓI RPG — Interface do Usuário (UI)
- * Manipulação do DOM, animações, localStorage, Conquistas e feedback visual
+ * HERÓI RPG — Interface do Usuário (UI) v1.3
+ * Manipulação do DOM, animações, localStorage, Conquistas, Chefões
  */
 
 class UI {
@@ -8,6 +8,7 @@ class UI {
     this.heroi = null;
     this.nomeInimigoAtual = "";
     this.processando = false;
+    this.chefaoAtual = null;
     this.inicializar();
   }
 
@@ -17,7 +18,6 @@ class UI {
     this.verificarProgressoSalvo();
   }
 
-  // ========== VERIFICAR PROGRESSO SALVO ==========
   verificarProgressoSalvo() {
     const dadosSalvos = Heroi.carregar();
     if (dadosSalvos) {
@@ -26,6 +26,7 @@ class UI {
         `Herói: ${dadosSalvos.nome}\n` +
         `Nível: ${getEmojiNivel(classificarNivel(dadosSalvos.xp))} ${classificarNivel(dadosSalvos.xp)}\n` +
         `XP: ${dadosSalvos.xp}\n` +
+        `Chefões: ${dadosSalvos.chefoesDerrotados || 0}\n` +
         `Conquistas: ${(dadosSalvos.conquistas || []).length}/${Object.keys(CONQUISTAS_DEFINICAO).length}\n\n` +
         `Deseja continuar de onde parou?`
       );
@@ -37,7 +38,6 @@ class UI {
     }
   }
 
-  // ========== PARTÍCULAS DE FUNDO ==========
   criarParticulas() {
     const container = document.getElementById('particles');
     if (!container) return;
@@ -52,7 +52,6 @@ class UI {
     }
   }
 
-  // ========== EVENTOS ==========
   bindEventos() {
     const btnIniciar = document.getElementById('btn-iniciar');
     const inputNome = document.getElementById('input-nome');
@@ -89,7 +88,6 @@ class UI {
     }
   }
 
-  // ========== INICIAR JOGO ==========
   iniciarJogo() {
     const input = document.getElementById('input-nome');
     const nome = input.value.trim() || "Herói Sem Nome";
@@ -112,9 +110,33 @@ class UI {
 
   entrarNoJogo() {
     this.atualizarPainelStatus();
+    this.atualizarBarraChefao();
     document.getElementById('tela-login').classList.remove('ativa');
     document.getElementById('tela-jogo').classList.add('ativa');
     this.mostrarResultado(`✨ Bem-vindo de volta, ${this.heroi.nome}! Escolha seu item para duelar!`);
+  }
+
+  // ========== ATUALIZAR BARRA DE CHEFÃO ==========
+  atualizarBarraChefao() {
+    if (!this.heroi) return;
+    const vitorias = this.heroi.vitoriasDesdeUltimoChefe;
+    const necessarias = 5;
+    const porcentagem = Math.min(100, (vitorias / necessarias) * 100);
+
+    const barra = document.getElementById('barra-chefao');
+    const contador = document.getElementById('chefao-contador');
+    const container = document.getElementById('barra-chefao-container');
+
+    if (barra) barra.style.width = porcentagem + '%';
+    if (contador) contador.textContent = `${vitorias} / ${necessarias} vitórias`;
+
+    if (container) {
+      if (vitorias >= necessarias) {
+        container.classList.add('chefao-ativo');
+      } else {
+        container.classList.remove('chefao-ativo');
+      }
+    }
   }
 
   // ========== ESCOLHER ITEM ==========
@@ -122,10 +144,28 @@ class UI {
     if (this.processando) return;
     this.processando = true;
 
+    if (this.heroi) this.heroi.ultimaEscolha = itemEscolhido;
+
     document.querySelectorAll('.btn-item').forEach(btn => btn.disabled = true);
 
-    this.nomeInimigoAtual = getNomeInimigoAleatorio();
-    document.getElementById('combatente-nome-inimigo').textContent = this.nomeInimigoAtual;
+    // Verifica se é hora do chefão (a cada 5 vitórias)
+    const isChefao = this.heroi && this.heroi.vitoriasDesdeUltimoChefe >= 5;
+
+    if (isChefao) {
+      this.chefaoAtual = getChefeAleatorio();
+      this.nomeInimigoAtual = `${this.chefaoAtual.titulo} ${this.chefaoAtual.nome}`;
+      document.getElementById('combatente-nome-inimigo').textContent = this.nomeInimigoAtual;
+      document.getElementById('icone-inimigo').textContent = this.chefaoAtual.emoji;
+      document.getElementById('vs-texto').textContent = "⚔️";
+
+      this.mostrarResultado(getMensagemChefeAparece(this.chefaoAtual), "processando");
+      await this.delay(1500);
+    } else {
+      this.nomeInimigoAtual = getNomeInimigoAleatorio();
+      document.getElementById('combatente-nome-inimigo').textContent = this.nomeInimigoAtual;
+      document.getElementById('icone-inimigo').textContent = "👹";
+      document.getElementById('vs-texto').textContent = "VS";
+    }
 
     const itemJogador = ITENS[itemEscolhido];
     const elItemHeroi = document.getElementById('item-heroi');
@@ -134,11 +174,20 @@ class UI {
 
     document.getElementById('cartao-heroi').classList.add('ataque-heroi');
 
-    this.mostrarResultado("⚔️ Duelando...", "processando");
+    if (!isChefao) {
+      this.mostrarResultado("⚔️ Duelando...", "processando");
+    }
 
     await this.delay(800);
 
-    const pc = escolhaComputador();
+    // Escolha do computador (IA mais inteligente para chefões)
+    let pc;
+    if (isChefao) {
+      pc = escolhaChefe(this.heroi.ultimaEscolha, this.heroi.streak);
+    } else {
+      pc = escolhaComputador();
+    }
+
     const elItemInimigo = document.getElementById('item-inimigo');
     elItemInimigo.textContent = pc.emoji;
     elItemInimigo.classList.add('revelado', 'flip-revelar');
@@ -154,18 +203,24 @@ class UI {
     let novasConquistas = [];
 
     if (resultado.resultado === "vitoria") {
-      const res = this.heroi.ganharXp(XP_POR_VITORIA);
+      const isChefeDerrotado = isChefao;
+      const xpBase = isChefeDerrotado ? XP_POR_VITORIA + XP_CHEFAO_BONUS : XP_POR_VITORIA;
+      const res = this.heroi.ganharXp(xpBase, isChefeDerrotado);
       xpGanho = res.xpGanho;
       bonusXp = res.bonus;
       nivelSubiu = res.nivelSubiu;
       novasConquistas = res.novasConquistas;
+
+      if (isChefeDerrotado) {
+        this.heroi.vitoriasDesdeUltimoChefe = 0;
+        this.heroi.salvar();
+      }
 
       document.getElementById('cartao-heroi').classList.add('glow-vitoria');
       document.getElementById('cartao-inimigo').classList.add('dano-recebido');
     } else if (resultado.resultado === "empate") {
       const res = this.heroi.empatar();
       xpGanho = XP_POR_EMPATE;
-      // CORREÇÃO: Agora empate NÃO conta como vitória!
       novasConquistas = res.novasConquistas;
 
       document.getElementById('cartao-heroi').classList.add('glow-empate');
@@ -181,7 +236,11 @@ class UI {
     // Monta mensagem de resultado
     let mensagemFinal = resultado.mensagem;
     if (resultado.resultado === "vitoria") {
-      mensagemFinal += ` (+${xpGanho} XP)`;
+      if (isChefao) {
+        mensagemFinal = getMensagemChefeDerrotado(this.chefaoAtual) + `\n(+${xpGanho} XP)`;
+      } else {
+        mensagemFinal += ` (+${xpGanho} XP)`;
+      }
       if (bonusXp > 0) mensagemFinal += ` [Bônus: +${bonusXp}]`;
       const msgStreak = getMensagemStreak(this.heroi.streak);
       if (msgStreak) mensagemFinal = msgStreak + "\n" + mensagemFinal;
@@ -191,19 +250,20 @@ class UI {
 
     this.mostrarResultado(mensagemFinal, resultado.resultado);
     this.atualizarPainelStatus();
+    this.atualizarBarraChefao();
 
     // Mostra conquistas desbloqueadas
     if (novasConquistas.length > 0) {
       await this.delay(300);
       for (const conquista of novasConquistas) {
-        this.mostrarConquista(conquista);
+        this.mostrarNotificacao("🏆 NOVA CONQUISTA!", `${conquista.emoji} ${conquista.nome}`, conquista.emoji, "#9b59b6");
         await this.delay(2500);
       }
     }
 
     if (nivelSubiu) {
       await this.delay(500);
-      this.mostrarLevelUp(this.heroi.nivel);
+      this.mostrarNotificacao("LEVEL UP!", `Você alcançou o nível ${this.heroi.nivel}!`, "⭐", "#c9a227");
     }
 
     await this.delay(2500);
@@ -213,24 +273,23 @@ class UI {
     this.processando = false;
   }
 
-  // ========== MOSTRAR CONQUISTA ==========
-  mostrarConquista(conquista) {
+  // ========== NOTIFICAÇÃO GENÉRICA ==========
+  mostrarNotificacao(titulo, mensagem, icone, corBorda) {
     const notif = document.getElementById('notificacao-levelup');
-    const nivelEl = document.getElementById('levelup-nivel');
-    const tituloEl = notif.querySelector('.levelup-titulo');
-    const brilhoEl = notif.querySelector('.levelup-brilho');
+    const tituloEl = document.getElementById('notif-titulo');
+    const mensagemEl = document.getElementById('notif-mensagem');
+    const iconeEl = document.getElementById('notif-icone');
 
-    tituloEl.textContent = "🏆 NOVA CONQUISTA!";
-    nivelEl.innerHTML = `${conquista.emoji} ${conquista.nome}<br><small style="font-size:0.8rem;color:#a0a0b0">${conquista.descricao}</small>`;
-    brilhoEl.textContent = conquista.emoji;
+    tituloEl.textContent = titulo;
+    mensagemEl.innerHTML = mensagem;
+    iconeEl.textContent = icone;
+
+    notif.querySelector('.levelup-texto').style.borderColor = corBorda;
 
     notif.classList.add('ativo');
 
     setTimeout(() => {
       notif.classList.remove('ativo');
-      // Restaura textos originais
-      tituloEl.textContent = "LEVEL UP!";
-      brilhoEl.textContent = "⭐";
     }, 3000);
   }
 
@@ -262,26 +321,6 @@ class UI {
     if (tipo === "processando") el.classList.add('processando');
   }
 
-  // ========== MOSTRAR LEVEL UP ==========
-  mostrarLevelUp(nivel) {
-    const notif = document.getElementById('notificacao-levelup');
-    const nivelEl = document.getElementById('levelup-nivel');
-    const tituloEl = notif.querySelector('.levelup-titulo');
-    const brilhoEl = notif.querySelector('.levelup-brilho');
-
-    tituloEl.textContent = "LEVEL UP!";
-    nivelEl.textContent = `Você alcançou o nível ${nivel}!`;
-    brilhoEl.textContent = "⭐";
-
-    notif.classList.add('ativo');
-    document.getElementById('avatar-heroi').classList.add('pulso-escala');
-
-    setTimeout(() => {
-      notif.classList.remove('ativo');
-      document.getElementById('avatar-heroi').classList.remove('pulso-escala');
-    }, 3200);
-  }
-
   // ========== LIMPAR ANIMAÇÕES ==========
   limparAnimacoes() {
     const elementos = [
@@ -304,6 +343,8 @@ class UI {
     document.getElementById('item-heroi').textContent = "?";
     document.getElementById('item-inimigo').textContent = "?";
     document.getElementById('combatente-nome-inimigo').textContent = "Computador";
+    document.getElementById('icone-inimigo').textContent = "👹";
+    document.getElementById('vs-texto').textContent = "VS";
   }
 
   // ========== MODAL STATUS ==========
@@ -318,7 +359,6 @@ class UI {
       ? Math.round((status.vitorias / totalPartidas) * 100)
       : 0;
 
-    // Pega conquistas
     const { desbloqueadas, bloqueadas } = this.heroi.getConquistas();
 
     let conquistasHTML = '';
@@ -419,6 +459,10 @@ class UI {
         <span class="status-valor destaque">${status.maiorStreak}</span>
       </div>
       <div class="status-linha">
+        <span class="status-label">🐉 Chefões Derrotados</span>
+        <span class="status-valor destaque">${status.chefoesDerrotados || 0}</span>
+      </div>
+      <div class="status-linha">
         <span class="status-label">🎮 Partidas Totais</span>
         <span class="status-valor">${totalPartidas}</span>
       </div>
@@ -441,6 +485,7 @@ class UI {
       `Você está prestes a APAGAR TODO O PROGRESSO de ${this.heroi.nome}.\n` +
       `Nível: ${getEmojiNivel(this.heroi.nivel)} ${this.heroi.nivel}\n` +
       `XP: ${this.heroi.xp}\n` +
+      `Chefões: ${this.heroi.chefoesDerrotados}\n` +
       `Conquistas: ${this.heroi.conquistas.length}\n\n` +
       `Esta ação NÃO pode ser desfeita!\n\n` +
       `Deseja realmente reiniciar?`
@@ -449,6 +494,7 @@ class UI {
     if (confirmar) {
       Heroi.reiniciar();
       this.heroi = null;
+      this.chefaoAtual = null;
       this.fecharModalStatus();
 
       document.getElementById('tela-jogo').classList.remove('ativa');
