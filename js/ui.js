@@ -65,6 +65,7 @@ class UI {
 
     document.querySelectorAll('.btn-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        som.clique();
         const item = e.currentTarget.dataset.item;
         this.escolherItem(Number(item));
       });
@@ -158,6 +159,7 @@ class UI {
       document.getElementById('icone-inimigo').textContent = this.chefaoAtual.emoji;
       document.getElementById('vs-texto').textContent = "⚔️";
 
+      som.chefaoAparece();
       this.mostrarResultado(getMensagemChefeAparece(this.chefaoAtual), "processando");
       await this.delay(1500);
     } else {
@@ -173,6 +175,7 @@ class UI {
     elItemHeroi.classList.add('revelado', 'flip-revelar');
 
     document.getElementById('cartao-heroi').classList.add('ataque-heroi');
+    som.ataque();
 
     if (!isChefao) {
       this.mostrarResultado("⚔️ Duelando...", "processando");
@@ -216,6 +219,7 @@ class UI {
         this.heroi.salvar();
       }
 
+      som.vitoria();
       document.getElementById('cartao-heroi').classList.add('glow-vitoria');
       document.getElementById('cartao-inimigo').classList.add('dano-recebido');
     } else if (resultado.resultado === "empate") {
@@ -223,12 +227,14 @@ class UI {
       xpGanho = XP_POR_EMPATE;
       novasConquistas = res.novasConquistas;
 
+      som.empate();
       document.getElementById('cartao-heroi').classList.add('glow-empate');
       document.getElementById('cartao-inimigo').classList.add('glow-empate');
     } else {
       const res = this.heroi.perder();
       novasConquistas = res.novasConquistas;
 
+      som.derrota();
       document.getElementById('cartao-heroi').classList.add('glow-derrota', 'dano-recebido');
       document.getElementById('cartao-inimigo').classList.add('glow-vitoria');
     }
@@ -256,6 +262,7 @@ class UI {
     if (novasConquistas.length > 0) {
       await this.delay(300);
       for (const conquista of novasConquistas) {
+        som.conquista();
         this.mostrarNotificacao("🏆 NOVA CONQUISTA!", `${conquista.emoji} ${conquista.nome}`, conquista.emoji, "#9b59b6");
         await this.delay(2500);
       }
@@ -263,6 +270,7 @@ class UI {
 
     if (nivelSubiu) {
       await this.delay(500);
+      som.levelUp();
       this.mostrarNotificacao("LEVEL UP!", `Você alcançou o nível ${this.heroi.nivel}!`, "⭐", "#c9a227");
     }
 
