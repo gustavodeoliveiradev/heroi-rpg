@@ -15,7 +15,7 @@ jogo **jogável** entre uma fase e outra — nunca ficamos com o jogo "pela meta
 
 ---
 
-## 🎨 Fase 1 — Personalização do Herói
+## ✅ Fase 1 — Personalização do Herói
 **O que entra:**
 - Tela de criação: escolher um **avatar** (emoji/ícone) entre opções
 - Escolher uma **classe inicial** (ex: Guerreiro, Mago, Arqueiro) —
