@@ -6,6 +6,7 @@
 class UI {
   constructor() {
     this.heroi = null;
+    this.classeSelecionada = "guerreiro";
     this.nomeInimigoAtual = "";
     this.processando = false;
     this.chefaoAtual = null;
@@ -63,6 +64,15 @@ class UI {
       });
     }
 
+    document.querySelectorAll('.card-classe').forEach(card => {
+      card.addEventListener('click', (e) => {
+        som.clique();
+        document.querySelectorAll('.card-classe').forEach(c => c.classList.remove('selecionada'));
+        e.currentTarget.classList.add('selecionada');
+        this.classeSelecionada = e.currentTarget.dataset.classe;
+      });
+    });
+
     document.querySelectorAll('.btn-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         som.clique();
@@ -104,7 +114,7 @@ class UI {
       Heroi.reiniciar();
     }
 
-    this.heroi = new Heroi(nome);
+    this.heroi = new Heroi(nome, null, this.classeSelecionada);
     this.heroi.salvar();
     this.entrarNoJogo();
   }
@@ -307,7 +317,10 @@ class UI {
     const status = this.heroi.getStatus();
 
     document.getElementById('nome-heroi').textContent = status.nome;
+    document.getElementById('avatar-heroi').textContent = status.avatar;
+    document.getElementById('icone-heroi').textContent = status.avatar;
     document.getElementById('nivel-badge').textContent = `${status.emojiNivel} ${status.nivel}`;
+    document.getElementById('nivel-badge').title = `${status.classe} • ${status.emojiElemento} ${status.elemento}`;
     document.getElementById('xp-texto').textContent = status.xpDisplay;
     document.getElementById('barra-xp').style.width = status.progressoXp + '%';
     document.getElementById('stat-vitorias').textContent = status.vitorias;

@@ -20,6 +20,31 @@
       <p class="subtitulo">O Duelo dos Elementos</p>
       <div class="login-form">
         <input type="text" id="input-nome" placeholder="Digite o nome do seu herói..." maxlength="20">
+
+        <p class="label-classe">Escolha sua classe:</p>
+        <div class="grade-classes" id="grade-classes">
+          <button class="card-classe selecionada" data-classe="guerreiro">
+            <span class="card-classe-icone">⚔️</span>
+            <span class="card-classe-nome">Guerreiro</span>
+            <span class="card-classe-elemento">🟤 Terra</span>
+          </button>
+          <button class="card-classe" data-classe="mago">
+            <span class="card-classe-icone">🔮</span>
+            <span class="card-classe-nome">Mago</span>
+            <span class="card-classe-elemento">🔴 Fogo</span>
+          </button>
+          <button class="card-classe" data-classe="arqueiro">
+            <span class="card-classe-icone">🏹</span>
+            <span class="card-classe-nome">Arqueiro</span>
+            <span class="card-classe-elemento">🟢 Vento</span>
+          </button>
+          <button class="card-classe" data-classe="assassino">
+            <span class="card-classe-icone">🔪</span>
+            <span class="card-classe-nome">Assassino</span>
+            <span class="card-classe-elemento">🔵 Água</span>
+          </button>
+        </div>
+
         <button class="btn-epico" id="btn-iniciar">
           <span class="btn-texto">Iniciar Jornada</span>
           <span class="btn-brilho"></span>

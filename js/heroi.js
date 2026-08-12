@@ -4,6 +4,49 @@
  * Versão Web v1.3
  */
 
+const CLASSES = {
+  guerreiro: {
+    id: "guerreiro",
+    nome: "Guerreiro",
+    elemento: "Terra",
+    emojiElemento: "🟤",
+    avatar: "⚔️",
+    cor: "#a97845",
+    frase: "Força e resistência acima de tudo."
+  },
+  mago: {
+    id: "mago",
+    nome: "Mago",
+    elemento: "Fogo",
+    emojiElemento: "🔴",
+    avatar: "🔮",
+    cor: "#e74c3c",
+    frase: "As chamas obedecem ao meu comando."
+  },
+  arqueiro: {
+    id: "arqueiro",
+    nome: "Arqueiro",
+    elemento: "Vento",
+    emojiElemento: "🟢",
+    avatar: "🏹",
+    cor: "#2ecc71",
+    frase: "Um tiro, um alvo, nenhuma chance."
+  },
+  assassino: {
+    id: "assassino",
+    nome: "Assassino",
+    elemento: "Água",
+    emojiElemento: "🔵",
+    avatar: "🔪",
+    cor: "#3498db",
+    frase: "Fluido como a água, mortal como a lâmina."
+  }
+};
+
+function getClasseInfo(classeId) {
+  return CLASSES[classeId] || CLASSES.guerreiro;
+}
+
 function classificarNivel(xp) {
   if (xp <= 1000) return "Ferro";
   else if (xp <= 2000) return "Bronze";
@@ -210,9 +253,10 @@ function getRaridadeLabel(raridade) {
 }
 
 class Heroi {
-  constructor(nome, dadosSalvos = null) {
+  constructor(nome, dadosSalvos = null, classeId = "guerreiro") {
     if (dadosSalvos) {
       this.nome = dadosSalvos.nome;
+      this.classe = dadosSalvos.classe || "guerreiro";
       this.xp = dadosSalvos.xp;
       this.vitorias = dadosSalvos.vitorias;
       this.derrotas = dadosSalvos.derrotas;
@@ -226,6 +270,7 @@ class Heroi {
       this.nivel = classificarNivel(this.xp);
     } else {
       this.nome = nome;
+      this.classe = classeId;
       this.xp = 0;
       this.vitorias = 0;
       this.derrotas = 0;
@@ -238,6 +283,14 @@ class Heroi {
       this.vitoriasDesdeUltimoChefe = 0;
       this.ultimaEscolha = null;
     }
+  }
+
+  get avatar() {
+    return getClasseInfo(this.classe).avatar;
+  }
+
+  getClasseInfo() {
+    return getClasseInfo(this.classe);
   }
 
   ganharXp(quantidade, isChefe = false) {
@@ -306,6 +359,7 @@ class Heroi {
     try {
       localStorage.setItem('heroiRpg_dados', JSON.stringify({
         nome: this.nome,
+        classe: this.classe,
         xp: this.xp,
         vitorias: this.vitorias,
         derrotas: this.derrotas,
@@ -358,8 +412,13 @@ class Heroi {
   }
 
   getStatus() {
+    const classeInfo = this.getClasseInfo();
     return {
       nome: this.nome,
+      classe: classeInfo.nome,
+      elemento: classeInfo.elemento,
+      emojiElemento: classeInfo.emojiElemento,
+      avatar: this.avatar,
       xp: this.xp,
       nivel: this.nivel,
       emojiNivel: getEmojiNivel(this.nivel),

@@ -158,6 +158,60 @@ body {
   color: var(--cor-texto-secundario);
 }
 
+/* Seleção de Classe */
+.label-classe {
+  color: var(--cor-texto-secundario);
+  font-size: 0.9rem;
+  text-align: center;
+  margin: -0.5rem 0 -0.75rem;
+}
+
+.grade-classes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.card-classe {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 0.9rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: var(--transicao-padrao);
+  font-family: var(--fonte-corpo);
+}
+
+.card-classe:hover {
+  border-color: var(--cor-primaria);
+  transform: translateY(-3px);
+}
+
+.card-classe.selecionada {
+  border-color: var(--cor-primaria);
+  background: rgba(201, 162, 39, 0.12);
+  box-shadow: 0 0 20px rgba(201, 162, 39, 0.2);
+}
+
+.card-classe-icone {
+  font-size: 1.8rem;
+}
+
+.card-classe-nome {
+  color: var(--cor-texto);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.card-classe-elemento {
+  color: var(--cor-texto-secundario);
+  font-size: 0.75rem;
+}
+
 /* Botão Épico */
 .btn-epico {
   position: relative;
