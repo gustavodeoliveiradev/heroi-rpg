@@ -34,7 +34,7 @@ novas classes no futuro sem reescrever código.
 
 ---
 
-## ⚔️ Fase 2 — Fundação do Combate RPG (Pokémon-style)
+## ⚔️ Fase 2 — Fundação do Combate RPG (Pokémon-style) em desenvolvimento... 👷🔨🚧
 **O que entra:**
 - Herói e inimigo passam a ter **HP** (pontos de vida), não é mais
   "ganha ou perde na hora"
