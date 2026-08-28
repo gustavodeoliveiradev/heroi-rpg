@@ -209,9 +209,10 @@ class UI {
     await this.delay(800);
 
     // IA escolhe a ação do inimigo, respeitando a Stamina dele
-    let itemInimigo = combate.isChefao
+    const escolhaIA = combate.isChefao
       ? escolhaChefe(itemEscolhido, this.heroi.streak)
       : escolhaComputador();
+    let itemInimigo = escolhaIA.chave;
     if (!getAcoesDisponiveis(combate.inimigo).includes(itemInimigo)) itemInimigo = 3;
 
     const elItemInimigo = document.getElementById('item-inimigo');
