@@ -29,6 +29,14 @@ function getMultiplicadorElemental(elementoAtacante, elementoAlvo) {
   return 1; // elementos "neutros" entre si na roda de 4
 }
 
+// A patente do herói ("Ferro", "Bronze"...) precisa virar número pra escalar atributos
+const ORDEM_PATENTES = ["Ferro", "Bronze", "Prata", "Ouro", "Platina", "Ascendente", "Imortal", "Radiante"];
+
+function nivelNumerico(patente) {
+  const i = ORDEM_PATENTES.indexOf(patente);
+  return i === -1 ? 1 : i + 1; // Ferro = nível 1, Radiante = nível 8
+}
+
 // ===== CRIAÇÃO DE COMBATENTES =====
 function calcularStatsClasse(classeId, nivel) {
   const a = ATRIBUTOS_CLASSE[classeId] || ATRIBUTOS_CLASSE.guerreiro;
@@ -40,14 +48,22 @@ function calcularStatsClasse(classeId, nivel) {
   };
 }
 
+// Mapa explícito classe -> id do elemento (evita bug de acentuação, ex: "Água" vs "agua")
+const ELEMENTO_POR_CLASSE = {
+  guerreiro: "terra",
+  mago: "fogo",
+  arqueiro: "vento",
+  assassino: "agua"
+};
+
 // Cria o "combatente" do herói para essa batalha, a partir dos dados salvos
 function criarCombatenteHeroi(heroi) {
-  const stats = calcularStatsClasse(heroi.classe, heroi.nivel);
+  const stats = calcularStatsClasse(heroi.classe, nivelNumerico(heroi.nivel));
   return {
     tipo: "heroi",
     nome: heroi.nome,
     classe: heroi.classe,
-    elemento: heroi.elemento || getClasseInfo(heroi.classe).elemento.toLowerCase(),
+    elemento: heroi.elemento || ELEMENTO_POR_CLASSE[heroi.classe] || "terra",
     hp: stats.hpMax,
     hpMax: stats.hpMax,
     ataque: stats.ataque,
@@ -58,10 +74,10 @@ function criarCombatenteHeroi(heroi) {
 }
 
 // Cria o combatente inimigo. Elemento é sorteado (mundos futuros = pools diferentes)
-function criarCombatenteInimigo(nome, nivelReferencia, isChefao = false) {
+function criarCombatenteInimigo(nome, patenteReferencia, isChefao = false) {
   const elementoSorteado = ORDEM_ELEMENTOS[Math.floor(Math.random() * ORDEM_ELEMENTOS.length)];
   const multiplicadorChefao = isChefao ? 1.4 : 1;
-  const nivelEfetivo = Math.max(1, nivelReferencia);
+  const nivelEfetivo = Math.max(1, nivelNumerico(patenteReferencia));
   const base = calcularStatsClasse("guerreiro", nivelEfetivo); // guerreiro como "molde" neutro pra inimigos
 
   return {
@@ -142,7 +158,11 @@ function aplicarDano(combatente, dano) {
   combatente.hp = Math.max(0, combatente.hp - dano);
 }
 
+const EMOJI_ELEMENTO = { fogo: "🔥", vento: "🌪️", terra: "🪨", agua: "💧" };
+
 // Exporta
+window.ORDEM_PATENTES = ORDEM_PATENTES;
+window.nivelNumerico = nivelNumerico;
 window.ATRIBUTOS_CLASSE = ATRIBUTOS_CLASSE;
 window.ORDEM_ELEMENTOS = ORDEM_ELEMENTOS;
 window.getMultiplicadorElemental = getMultiplicadorElemental;
@@ -150,4 +170,5 @@ window.calcularStatsClasse = calcularStatsClasse;
 window.criarCombatenteHeroi = criarCombatenteHeroi;
 window.criarCombatenteInimigo = criarCombatenteInimigo;
 window.getAcoesDisponiveis = getAcoesDisponiveis;
+window.EMOJI_ELEMENTO = EMOJI_ELEMENTO;
 window.resolverTurno = resolverTurno;

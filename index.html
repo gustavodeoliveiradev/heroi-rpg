@@ -111,6 +111,11 @@
           <div class="combatente-nome" id="combatente-nome-heroi">Seu Herói</div>
           <div class="combatente-icone" id="icone-heroi">🧙‍♂️</div>
           <div class="combatente-item" id="item-heroi">?</div>
+          <div class="barra-hp-container">
+            <div class="barra-hp-label"><span>HP</span><span id="hp-texto-heroi">0/0</span></div>
+            <div class="barra-hp-fundo"><div class="barra-hp-preenchimento" id="barra-hp-heroi" style="width:100%"></div></div>
+          </div>
+          <div class="barra-stamina-fundo"><div class="barra-stamina-preenchimento" id="barra-stamina-heroi" style="width:100%"></div></div>
         </div>
       </div>
 
@@ -125,7 +130,13 @@
         <div class="cartao-combatente" id="cartao-inimigo">
           <div class="combatente-nome" id="combatente-nome-inimigo">Computador</div>
           <div class="combatente-icone" id="icone-inimigo">👹</div>
+          <span class="elemento-badge" id="elemento-badge-inimigo"></span>
           <div class="combatente-item" id="item-inimigo">?</div>
+          <div class="barra-hp-container">
+            <div class="barra-hp-label"><span>HP</span><span id="hp-texto-inimigo">0/0</span></div>
+            <div class="barra-hp-fundo"><div class="barra-hp-preenchimento" id="barra-hp-inimigo" style="width:100%"></div></div>
+          </div>
+          <div class="barra-stamina-fundo"><div class="barra-stamina-preenchimento" id="barra-stamina-inimigo" style="width:100%"></div></div>
         </div>
       </div>
     </main>
@@ -186,6 +197,7 @@
   <script src="js/sound.js"></script>
   <script src="js/heroi.js"></script>
   <script src="js/jogo.js"></script>
+  <script src="js/combate.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>

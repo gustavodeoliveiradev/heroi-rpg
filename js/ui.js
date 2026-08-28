@@ -10,6 +10,7 @@ class UI {
     this.nomeInimigoAtual = "";
     this.processando = false;
     this.chefaoAtual = null;
+    this.combate = null;
     this.inicializar();
   }
 
@@ -150,33 +151,50 @@ class UI {
     }
   }
 
-  // ========== ESCOLHER ITEM ==========
+  // ========== ESCOLHER AÇÃO (1 TURNO) ==========
   async escolherItem(itemEscolhido) {
     if (this.processando) return;
     this.processando = true;
-
-    if (this.heroi) this.heroi.ultimaEscolha = itemEscolhido;
-
     document.querySelectorAll('.btn-item').forEach(btn => btn.disabled = true);
 
-    // Verifica se é hora do chefão (a cada 5 vitórias)
-    const isChefao = this.heroi && this.heroi.vitoriasDesdeUltimoChefe >= 5;
+    // Inicia um novo combate se não houver um em andamento
+    if (!this.combate) {
+      const isChefao = this.heroi && this.heroi.vitoriasDesdeUltimoChefe >= 5;
+      let nomeInimigo, emojiInimigo, chefaoAtual = null;
 
-    if (isChefao) {
-      this.chefaoAtual = getChefeAleatorio();
-      this.nomeInimigoAtual = `${this.chefaoAtual.titulo} ${this.chefaoAtual.nome}`;
-      document.getElementById('combatente-nome-inimigo').textContent = this.nomeInimigoAtual;
-      document.getElementById('icone-inimigo').textContent = this.chefaoAtual.emoji;
-      document.getElementById('vs-texto').textContent = "⚔️";
+      if (isChefao) {
+        chefaoAtual = getChefeAleatorio();
+        nomeInimigo = `${chefaoAtual.titulo} ${chefaoAtual.nome}`;
+        emojiInimigo = chefaoAtual.emoji;
+      } else {
+        nomeInimigo = getNomeInimigoAleatorio();
+        emojiInimigo = "👹";
+      }
 
-      som.chefaoAparece();
-      this.mostrarResultado(getMensagemChefeAparece(this.chefaoAtual), "processando");
-      await this.delay(1500);
-    } else {
-      this.nomeInimigoAtual = getNomeInimigoAleatorio();
-      document.getElementById('combatente-nome-inimigo').textContent = this.nomeInimigoAtual;
-      document.getElementById('icone-inimigo').textContent = "👹";
-      document.getElementById('vs-texto').textContent = "VS";
+      const combatenteHeroi = criarCombatenteHeroi(this.heroi);
+      const combatenteInimigo = criarCombatenteInimigo(nomeInimigo, this.heroi.nivel, isChefao);
+
+      this.combate = { heroi: combatenteHeroi, inimigo: combatenteInimigo, isChefao, chefaoAtual };
+      this.nomeInimigoAtual = nomeInimigo;
+
+      document.getElementById('combatente-nome-inimigo').textContent = nomeInimigo;
+      document.getElementById('icone-inimigo').textContent = emojiInimigo;
+      document.getElementById('vs-texto').textContent = isChefao ? "⚔️" : "VS";
+      document.getElementById('elemento-badge-inimigo').textContent = EMOJI_ELEMENTO[combatenteInimigo.elemento] || "";
+      this.atualizarBarrasCombate();
+
+      if (isChefao) {
+        som.chefaoAparece();
+        this.mostrarResultado(getMensagemChefeAparece(chefaoAtual), "processando");
+        await this.delay(1500);
+      }
+    }
+
+    const combate = this.combate;
+
+    // Segurança: se a ação não é permitida pela Stamina atual, força Escudo
+    if (!getAcoesDisponiveis(combate.heroi).includes(itemEscolhido)) {
+      itemEscolhido = 3;
     }
 
     const itemJogador = ITENS[itemEscolhido];
@@ -186,89 +204,155 @@ class UI {
 
     document.getElementById('cartao-heroi').classList.add('ataque-heroi');
     som.ataque();
-
-    if (!isChefao) {
-      this.mostrarResultado("⚔️ Duelando...", "processando");
-    }
+    this.mostrarResultado("⚔️ Duelando...", "processando");
 
     await this.delay(800);
 
-    // Escolha do computador (IA mais inteligente para chefões)
-    let pc;
-    if (isChefao) {
-      pc = escolhaChefe(this.heroi.ultimaEscolha, this.heroi.streak);
-    } else {
-      pc = escolhaComputador();
-    }
+    // IA escolhe a ação do inimigo, respeitando a Stamina dele
+    let itemInimigo = combate.isChefao
+      ? escolhaChefe(itemEscolhido, this.heroi.streak)
+      : escolhaComputador();
+    if (!getAcoesDisponiveis(combate.inimigo).includes(itemInimigo)) itemInimigo = 3;
 
     const elItemInimigo = document.getElementById('item-inimigo');
-    elItemInimigo.textContent = pc.emoji;
+    elItemInimigo.textContent = ITENS[itemInimigo].emoji;
     elItemInimigo.classList.add('revelado', 'flip-revelar');
-
     document.getElementById('cartao-inimigo').classList.add('ataque-inimigo');
 
     await this.delay(600);
 
-    const resultado = resolverCombate(itemEscolhido, pc);
-    let xpGanho = 0;
-    let bonusXp = 0;
-    let nivelSubiu = false;
-    let novasConquistas = [];
+    const resultadoTurno = resolverTurno(combate.heroi, itemEscolhido, combate.inimigo, itemInimigo);
+    this.atualizarBarrasCombate();
 
-    if (resultado.resultado === "vitoria") {
-      const isChefeDerrotado = isChefao;
+    const evento = resultadoTurno.eventos[0];
+    let textoTurno;
+    if (evento.tipo === "vitoria_turno" && evento.vencedor === "A") {
+      textoTurno = `Seu(a) ${itemJogador.nome} causou ${evento.dano} de dano!`;
+      document.getElementById('cartao-inimigo').classList.add('dano-recebido');
+    } else if (evento.tipo === "vitoria_turno") {
+      textoTurno = `${combate.inimigo.nome} causou ${evento.dano} de dano!`;
+      document.getElementById('cartao-heroi').classList.add('dano-recebido');
+    } else if (evento.tipo === "empate_troca") {
+      textoTurno = `Ambos atacaram e trocaram ${evento.dano} de dano!`;
+    } else {
+      textoTurno = "Os dois se defenderam neste turno.";
+    }
+    this.mostrarResultado(textoTurno);
+
+    await this.delay(1200);
+
+    if (!resultadoTurno.combateEncerrado) {
+      document.getElementById('item-heroi').classList.remove('revelado', 'flip-revelar');
+      document.getElementById('item-inimigo').classList.remove('revelado', 'flip-revelar');
+      document.getElementById('item-heroi').textContent = "?";
+      document.getElementById('item-inimigo').textContent = "?";
+      document.getElementById('cartao-heroi').classList.remove('ataque-heroi', 'dano-recebido');
+      document.getElementById('cartao-inimigo').classList.remove('ataque-inimigo', 'dano-recebido');
+
+      this.mostrarResultado("Escolha sua próxima ação!");
+      this.atualizarBotoesDisponiveis();
+      this.processando = false;
+      return;
+    }
+
+    await this.finalizarCombate(resultadoTurno);
+  }
+
+  // ========== BARRAS DE HP/STAMINA ==========
+  atualizarBarrasCombate() {
+    if (!this.combate) return;
+    this._atualizarBarraDe('heroi', this.combate.heroi);
+    this._atualizarBarraDe('inimigo', this.combate.inimigo);
+  }
+
+  _atualizarBarraDe(lado, combatente) {
+    const pctHp = Math.max(0, Math.round((combatente.hp / combatente.hpMax) * 100));
+    const barraHp = document.getElementById(`barra-hp-${lado}`);
+    const textoHp = document.getElementById(`hp-texto-${lado}`);
+    const barraStamina = document.getElementById(`barra-stamina-${lado}`);
+
+    if (barraHp) {
+      barraHp.style.width = pctHp + '%';
+      barraHp.classList.remove('hp-medio', 'hp-baixo');
+      if (pctHp <= 25) barraHp.classList.add('hp-baixo');
+      else if (pctHp <= 50) barraHp.classList.add('hp-medio');
+    }
+    if (textoHp) textoHp.textContent = `${combatente.hp}/${combatente.hpMax}`;
+    if (barraStamina) barraStamina.style.width = Math.round((combatente.stamina / combatente.staminaMax) * 100) + '%';
+  }
+
+  // Desabilita botões de ataque quando a Stamina do herói acaba (só sobra Escudo)
+  atualizarBotoesDisponiveis() {
+    if (!this.combate) {
+      document.querySelectorAll('.btn-item').forEach(btn => btn.disabled = false);
+      return;
+    }
+    const acoes = getAcoesDisponiveis(this.combate.heroi);
+    document.getElementById('btn-orbe').disabled = !acoes.includes(1);
+    document.getElementById('btn-espada').disabled = !acoes.includes(2);
+    document.getElementById('btn-escudo').disabled = !acoes.includes(3);
+  }
+
+  // ========== FIM DO COMBATE (HP zerou) ==========
+  async finalizarCombate(resultadoTurno) {
+    const combate = this.combate;
+    const ambosCairam = combate.heroi.hp <= 0 && combate.inimigo.hp <= 0;
+    const venceuHeroi = !ambosCairam && resultadoTurno.vencedor === "A";
+
+    let xpGanho = 0, bonusXp = 0, nivelSubiu = false, novasConquistas = [];
+    let mensagemFinal, tipoResultado;
+
+    if (ambosCairam) {
+      const res = this.heroi.empatar();
+      xpGanho = XP_POR_EMPATE;
+      novasConquistas = res.novasConquistas;
+      tipoResultado = "empate";
+      mensagemFinal = `Vocês caíram juntos! Duelo empatado. (+${xpGanho} XP)`;
+
+      som.empate();
+      document.getElementById('cartao-heroi').classList.add('glow-empate');
+      document.getElementById('cartao-inimigo').classList.add('glow-empate');
+    } else if (venceuHeroi) {
+      const isChefeDerrotado = combate.isChefao;
       const xpBase = isChefeDerrotado ? XP_POR_VITORIA + XP_CHEFAO_BONUS : XP_POR_VITORIA;
       const res = this.heroi.ganharXp(xpBase, isChefeDerrotado);
       xpGanho = res.xpGanho;
       bonusXp = res.bonus;
       nivelSubiu = res.nivelSubiu;
       novasConquistas = res.novasConquistas;
+      tipoResultado = "vitoria";
 
       if (isChefeDerrotado) {
         this.heroi.vitoriasDesdeUltimoChefe = 0;
         this.heroi.salvar();
       }
 
+      mensagemFinal = combate.isChefao
+        ? getMensagemChefeDerrotado(combate.chefaoAtual)
+        : `Você derrotou ${combate.inimigo.nome}!`;
+      mensagemFinal += ` (+${xpGanho} XP)`;
+      if (bonusXp > 0) mensagemFinal += ` [Bônus: +${bonusXp}]`;
+      const msgStreak = getMensagemStreak(this.heroi.streak);
+      if (msgStreak) mensagemFinal = msgStreak + "\n" + mensagemFinal;
+
       som.vitoria();
       document.getElementById('cartao-heroi').classList.add('glow-vitoria');
       document.getElementById('cartao-inimigo').classList.add('dano-recebido');
-    } else if (resultado.resultado === "empate") {
-      const res = this.heroi.empatar();
-      xpGanho = XP_POR_EMPATE;
-      novasConquistas = res.novasConquistas;
-
-      som.empate();
-      document.getElementById('cartao-heroi').classList.add('glow-empate');
-      document.getElementById('cartao-inimigo').classList.add('glow-empate');
     } else {
       const res = this.heroi.perder();
       novasConquistas = res.novasConquistas;
+      tipoResultado = "derrota";
+      mensagemFinal = `${combate.inimigo.nome} venceu o duelo...`;
 
       som.derrota();
       document.getElementById('cartao-heroi').classList.add('glow-derrota', 'dano-recebido');
       document.getElementById('cartao-inimigo').classList.add('glow-vitoria');
     }
 
-    // Monta mensagem de resultado
-    let mensagemFinal = resultado.mensagem;
-    if (resultado.resultado === "vitoria") {
-      if (isChefao) {
-        mensagemFinal = getMensagemChefeDerrotado(this.chefaoAtual) + `\n(+${xpGanho} XP)`;
-      } else {
-        mensagemFinal += ` (+${xpGanho} XP)`;
-      }
-      if (bonusXp > 0) mensagemFinal += ` [Bônus: +${bonusXp}]`;
-      const msgStreak = getMensagemStreak(this.heroi.streak);
-      if (msgStreak) mensagemFinal = msgStreak + "\n" + mensagemFinal;
-    } else if (resultado.resultado === "empate") {
-      mensagemFinal += ` (+${xpGanho} XP)`;
-    }
-
-    this.mostrarResultado(mensagemFinal, resultado.resultado);
+    this.mostrarResultado(mensagemFinal, tipoResultado);
     this.atualizarPainelStatus();
     this.atualizarBarraChefao();
 
-    // Mostra conquistas desbloqueadas
     if (novasConquistas.length > 0) {
       await this.delay(300);
       for (const conquista of novasConquistas) {
@@ -286,6 +370,8 @@ class UI {
 
     await this.delay(2500);
     this.limparAnimacoes();
+    this.combate = null;
+    document.getElementById('elemento-badge-inimigo').textContent = "";
 
     document.querySelectorAll('.btn-item').forEach(btn => btn.disabled = false);
     this.processando = false;
